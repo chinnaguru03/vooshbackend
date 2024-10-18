@@ -74,19 +74,6 @@ const login = async (req, res) => {
 };
 
 // Google Authentication
-const googleAuth = passport.authenticate('google', { scope: ['profile', 'email'] });
-
-// Callback route for Google to redirect to
-const googleAuthCallback = async (req, res) => {
-    const token = jwt.sign(
-        { userId: req.user._id },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' }
-    );
-
-    res.redirect(`http://localhost:3000?token=${token}`); // Redirect to your frontend with the token
-};
-
 const googleAuthUser = async (req, res) => {
     const { authKey } = req.body;
   
@@ -96,9 +83,9 @@ const googleAuthUser = async (req, res) => {
       let email = decoded.email
   
       const user = await User.findOne({ email });
-  
+        
       const token = jwt.sign(
-        { userId: req.user._id },
+        { userId: user.user._id },
         process.env.JWT_SECRET,
         { expiresIn: '1h' }
     );
@@ -130,8 +117,6 @@ const logout = (req, res) => {
 module.exports = {
     register,
     login,
-    googleAuth,
-    googleAuthCallback,
     googleAuthUser,
     logout
 };

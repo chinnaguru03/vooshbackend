@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 const passport = require('passport');
-
+const jwtDecode = require('jwt-decode')
 // Register a new user
 const register = async (req, res) => {
     const errors = validationResult(req);
@@ -66,7 +66,7 @@ const login = async (req, res) => {
             { expiresIn: '1h' } // Token expiration time
         );
 
-        res.json({ token, user: { id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email,password:user.password } });
+        res.json({ token, user: { id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email } });
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ message: 'Server error' });
@@ -87,6 +87,41 @@ const googleAuthCallback = async (req, res) => {
     res.redirect(`http://localhost:3000?token=${token}`); // Redirect to your frontend with the token
 };
 
+const googleAuthUser = async (req, res) => {
+    const { authKey } = req.body;
+  
+    try {
+      const decoded = jwtDecode.jwtDecode(authKey);
+      console.log(decoded)
+      let email = decoded.email
+  
+      const user = await User.findOne({ email });
+  
+      const token = jwt.sign(
+        { userId: req.user._id },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+    );
+      
+  
+      if(user){
+        res.json({
+          _id: user._id,
+          firstName:user.firstName, 
+          lastName: user.lastName,
+          email: user.email,
+          token: token,
+          role:user.role
+        })
+      }else{
+        res.status(500).json({ message: 'User NOT Registered. Please Register to proceed' });
+      }
+        
+    } catch (error) {
+      res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
 const logout = (req, res) => {
     // Since JWT is stateless, we will just send a success response
     // In a more secure implementation, you might want to invalidate the token.
@@ -98,5 +133,6 @@ module.exports = {
     login,
     googleAuth,
     googleAuthCallback,
+    googleAuthUser,
     logout
 };

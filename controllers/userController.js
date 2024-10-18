@@ -83,10 +83,10 @@ const googleAuthUser = async (req, res) => {
       let email = decoded.email
   
       const user = await User.findOne({ email });
-      
+
       if(user){
         const token = jwt.sign(
-            { userId: user.user._id },
+            { userId: user._id },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
